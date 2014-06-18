@@ -8,7 +8,9 @@ var mimeTypes = {
 var url = require('url'),
    path = require('path'),
    http = require('http'),
-   fs   = require('fs');
+   fs   = require('fs'),
+   qs   = require('querystring'),
+   sys  = require ('sys');
 
 //directory, base file, page
 var _dir = 'page/',
@@ -16,10 +18,28 @@ var _dir = 'page/',
     page = '',
     file = '';
 
-
-
 http.createServer(function(request, response) {
-    var get = [];
+    var get  = null,
+        post = null;
+    
+    //1. check what method was used in form submit.
+    
+    if(request.method === 'GET') {
+        var url_parts = url.parse(request.url, true);
+        //console.log(url_parts);
+        get = url_parts.query;
+    } else if(request.method === 'POST') {
+        var body='';
+        request.on('data', function(data) {
+            body += data;
+        });
+
+        request.on('end', function(data) {
+            post = qs.parse(body);            
+        });
+    }
+    
+    //if favicon bug, ignore it
     if (request.url === '/favicon.ico') {  
         response.writeHead(404);
         response.end();  
@@ -27,41 +47,27 @@ http.createServer(function(request, response) {
         return;
     }
 
-    //1. get url
+    //2. get url
     var requestedUrl = url.parse(decodeURI(request.url), true).path;
 
-    //2. store url to array
+    //2.a store url to array
     requestedUrl = requestedUrl.split('/');
     for(var i = 0; i < requestedUrl.length; i++){
+
+        //remove empty string
         if(requestedUrl[i] === '') {
             requestedUrl.splice(i, 1);
         }
 
-        //check if there's a 'GET' request
+        //check if theres a query string in url
         if(requestedUrl[i].indexOf('?') !== -1) {
-            //get requested data
-            var getRequest = requestedUrl[i].substring(requestedUrl[i].indexOf('?')+1, requestedUrl[i].length);
-            
-            //split each data and convert it to object
-            var data = getRequest.split('&');
-            var convertedData = {};
-            for (var g = 0; g < data.length; g++ ){
-                if(data[g].indexOf('=') !== -1) {
-                    var newData = data[g].split('=');
-                    convertedData[newData[0]] = newData[1];
-                }
-            }
-
-            //add converted data to 'GET' array
+            //remove it
             requestedUrl[i] = requestedUrl[i].substring(0,requestedUrl[i].indexOf('?'));
-            get.push(requestedUrl[i]);
-            get.push(convertedData);
         }
+        
     }
 
-    console.log('url -> ', requestedUrl);
-    console.log('get -> ', get);
-    //2.a. if url length is 1. then its a folder/index, else its folder/page
+    //2.b if url length is 1. then its a folder/index, else its folder/page
     if(requestedUrl.length === 1) {
         base = requestedUrl[0] + '/';
         page = 'index.js';
@@ -70,14 +76,15 @@ http.createServer(function(request, response) {
         page = requestedUrl[1]  + '.js';
     }
     
-    //2.b. combine directory, base folder and page.
+    //2.c combine directory, base folder and page.
     file = _dir + base + page;
 
     //3. check if file exist
     fs.exists(file, function(exists) {
         if(exists) {
-            //3.a. it exists, lets include it!
+            //3.a if it does, try reading it
             fs.readFile(file, function(err, data) {
+                //an error will occur if we cant read the file
                 if(err) {
                     response.writeHead(500);
                     response.end('Server Error');
@@ -85,57 +92,50 @@ http.createServer(function(request, response) {
                     return;
                 }
 
+                //if we can read it, include it!
                 var content = require('./' + file),
+                //get header base on extension
                 headers = mimeTypes[path.extname(page)];
-
                 response.writeHead(200, headers);
 
+                // if url request greater than 3, check if its a method
                 if(requestedUrl.length >= 3) {
                     if(content.hasOwnProperty(requestedUrl[2])) {
-                        console.log('meron');
-                        response.writeHead(200, headers);
-
-                        for(var i = 0; i < get.length; i++ ) {
-                            //if function name and get name is equal,
-                            //pass get as parameter                            
-                            if(get[i] ===  requestedUrl[2]) {
-
-                                response.write(content[requestedUrl[2]](get[i+1]));
-                                response.end();
-                                return;
-                            }
+                        if (get !== null) {
+                            response.write(content[requestedUrl[2]](get));
+                        } else if( post !== null){
+                            response.write(content[requestedUrl[2]](post));    
                         }
-
-                        response.write(content[requestedUrl[2]](get[1]));
+                        
                         response.end();
 
                         return;
                     } else {
-                        response.writeHead(200, headers);
-                        response.write('Undefined');
+                        response.write('Method does not exist');
                         response.end();
 
                         return;
                     }
                 }
                 
+                // else we just need to load the default method
                 response.write(content.load());
                 response.end();
 
                 return;
-
             });
             
             return;
         }
 
+        //read previous file and check it.
         if(requestedUrl.length == 2) {
-            //load folder/index
+            //load the folder/index
             page = 'index.js';
             base = requestedUrl[1];
             file = _dir + requestedUrl[0] + '/' + page;
         } else {
-            //load index page.
+            //no folder specified, we load the index page.
             file = _dir + page,
             base = base.substring(base, base.length-1);
         }
@@ -152,7 +152,7 @@ http.createServer(function(request, response) {
 
         //read file
         fs.readFile(file, function(err, data) {
-            //an error will be returned if we cant access the file
+            //an error will occur if we cant read the file
             if(err) {
                 response.writeHead(500);
                 response.end('Server Error');
@@ -165,6 +165,7 @@ http.createServer(function(request, response) {
                 headers  = mimeTypes[path.extname(page)];
 
             //now lets check if there's a method inside this file.
+            //instead of 'base' being a folder, now its a function
             if (content.hasOwnProperty(base)) {
                 //execute the method
                 response.writeHead(200, headers);
@@ -174,8 +175,9 @@ http.createServer(function(request, response) {
                 return;
             }
 
+            //else throw error.
             response.writeHead(200, headers);
-            response.write('Undefined');
+            response.write('Method does not exist');
             response.end();
         });
     });
