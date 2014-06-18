@@ -1,0 +1,80 @@
+/* CSS Document */
+.box { background-color: lightpink; border:1px solid #999; position: absolute; width:150px; }
+.box h3 { border-bottom: 1px solid #069; margin: 0; padding :10px; }
+.box p { margin:0; padding:10px; }
+
+.box span:last-child{
+	border-color: transparent transparent chocolate transparent;
+	border-style: solid;
+	border-width: 0 0 20px 20px;
+	bottom: 0;
+	content: '';
+	cursor: se-resize;
+	display: block;
+	height: 0;
+	position: absolute;
+	right: 0;
+	width: 0;
+
+}
+
+.tabs { width: 400px; }
+.tabs ul { list-style: none; margin: 0; padding: 0; }
+.tabs li { 
+	background: #CCCCCC;
+	border: 1px solid black;
+	cursor: pointer; 
+	float: left; 
+	padding: 5px 10px; 
+}
+
+.tabs li.active { background: #FFFFFF; }
+
+.tabs .content { clear: both; }
+.tabs .content p { 
+	border: 1px solid black; 
+	display: none; 
+	padding: 10px;
+}
+.tabs .content p.active { display: block; }
+
+.accordion { border: 1px solid black; width: 400px; }
+
+.accordion h3 { 
+	background: #EFEFEF;
+	border-bottom: 1px solid black;
+	border-top: 1px solid black; 
+	cursor: pointer; 
+	margin: 0;
+	padding: 5px 10px; 
+}
+.accordion p { display: none; padding: 5px 10px; }
+.accordion p.active { display: block; }
+
+.banner { overflow: hidden; position: relative; width: 400px; }
+.banner .frame { left: 0; position: relative; top: 0; width: 1600px; }
+.banner img { float: left; }
+
+.banner .previous {
+	background: url(https://drupal.org/files/issues/next-prev.png) scroll 0 0 transparent;
+	cursor: pointer;
+	display: block;
+	height: 64px;
+	left: 10px;
+	position: absolute;
+	top: 30%;
+	width: 32px;
+	z-index: 3;
+}
+
+.banner .next {
+	background: url(https://drupal.org/files/issues/next-prev.png) scroll -32px 0 transparent;
+	cursor: pointer;
+	display: block;
+	height: 64px;
+	position: absolute;
+	right: 10px;
+	top: 30%;
+	width: 32px;
+	z-index: 3;
+}
