@@ -33,6 +33,7 @@ http.createServer(function(request, response) {
             requestedUrl.splice(i, 1);
         }
     }
+
     console.log(requestedUrl);
 
     //2.a. if url length is 1. then its a folder/index, else its folder/page
@@ -47,7 +48,6 @@ http.createServer(function(request, response) {
     //2.b. combine directory, base folder and page.
     file = _dir + base + page;
 
-    console.log(file);
     //3. check if file exist
     fs.exists(file, function(exists) {
         if(exists) {
@@ -63,7 +63,26 @@ http.createServer(function(request, response) {
                 var content = require('./' + file),
                 headers = mimeTypes[path.extname(page)];
 
-                response.writeHead(200, headers)
+                response.writeHead(200, headers);
+
+
+                if(requestedUrl.length >= 3) {
+                    if(content.hasOwnProperty(requestedUrl[2])) {
+                        response.writeHead(200, headers);
+                        response.write(content[requestedUrl[2]]());
+                        response.end();
+
+                        return;
+                    } else {
+                        response.writeHead(200, headers);
+                        response.write('Undefined');
+                        response.end();
+
+                        return;
+                    }
+                }
+                
+                
                 response.write(content.load());
                 response.end();
 
@@ -86,6 +105,16 @@ http.createServer(function(request, response) {
             file = _dir + page,
             base = base.substring(base, base.length-1);
         }
+
+        //check if file exists
+        fs.exists(file, function(exists) {
+            if (!exists) {
+                response.writeHead(404);
+                response.end('File Not Found');
+
+                return;
+            }
+        });
 
         //read file
         fs.readFile(file, function(err, data) {
