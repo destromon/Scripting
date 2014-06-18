@@ -74,9 +74,19 @@ http.createServer(function(request, response) {
             return;
         }
 
-        //4. if it is not a file, check maybe it is a method
-        file = _dir + page,
-        base = base.substring(base, base.length-1);
+        console.log('pasok ba dito pag tatlo');
+
+        if(requestedUrl.length == 2) {
+            //load folder/index
+            page = 'index.js';
+            base = requestedUrl[1];
+            file = _dir + requestedUrl[0] + '/' + page;
+        } else {
+            //load index page.
+            file = _dir + page,
+            base = base.substring(base, base.length-1);
+        }
+
         //read file
         fs.readFile(file, function(err, data) {
             //an error will be returned if we cant access the file
