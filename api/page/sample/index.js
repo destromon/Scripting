@@ -1,5 +1,5 @@
 var index = function() {    
-    return 'Welcome to Sample Index Page';
+    return 'Welcome to sample/index page';
 };
 
 exports.load = index;

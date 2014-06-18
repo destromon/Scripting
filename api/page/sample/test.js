@@ -1,5 +1,5 @@
 var sample = function() {    
-    return 'Welcome to Sample Page';
+    return 'Welcome to sample/test Page';
 };
 
 exports.load = sample;

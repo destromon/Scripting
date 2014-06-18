@@ -1,9 +1,9 @@
 var about = function() {
-    return 'Welcome to About Page';
+    return 'Welcome to about/test page';
 };
 
 var details = function() {
-    return 'Welcome to About Page Details';
+    return 'Welcome to about/test page with method details';
 };
 
 
