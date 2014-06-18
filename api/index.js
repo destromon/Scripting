@@ -16,7 +16,10 @@ var _dir = 'page/',
     page = '',
     file = '';
 
+
+
 http.createServer(function(request, response) {
+    var get = [];
     if (request.url === '/favicon.ico') {  
         response.writeHead(404);
         response.end();  
@@ -25,17 +28,29 @@ http.createServer(function(request, response) {
     }
 
     //1. get url
-    var requestedUrl = url.parse(decodeURI(request.url), true).path.split('/');
+    var requestedUrl = url.parse(decodeURI(request.url), true).path;
 
     //2. store url to array
+    requestedUrl = requestedUrl.split('/');
     for(var i = 0; i < requestedUrl.length; i++){
         if(requestedUrl[i] === '') {
             requestedUrl.splice(i, 1);
         }
+
+        //check if there's a 'GET' request
+        if(requestedUrl[i].indexOf('?') !== -1) {
+            //store it to get array
+            var getRequest = requestedUrl[i].substring(requestedUrl[i].indexOf('?')+1, requestedUrl[i].length);
+            getRequest = getRequest.split('&');
+            console.log(getRequest);
+            requestedUrl[i] = requestedUrl[i].substring(0,requestedUrl[i].indexOf('?'));
+            get.push(requestedUrl[i]);
+            get.push(getRequest);
+        }
     }
 
-    console.log(requestedUrl);
-
+    console.log('url-> ', requestedUrl);
+    console.log('get-> ', get);
     //2.a. if url length is 1. then its a folder/index, else its folder/page
     if(requestedUrl.length === 1) {
         base = requestedUrl[0] + '/';
@@ -82,7 +97,6 @@ http.createServer(function(request, response) {
                     }
                 }
                 
-                
                 response.write(content.load());
                 response.end();
 
@@ -92,8 +106,6 @@ http.createServer(function(request, response) {
             
             return;
         }
-
-        console.log('pasok ba dito pag tatlo');
 
         if(requestedUrl.length == 2) {
             //load folder/index
