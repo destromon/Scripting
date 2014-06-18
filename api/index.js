@@ -24,78 +24,88 @@ http.createServer(function(request, response) {
         return;
     }
 
-    //get url and split to get base dir.
-    var requestedUrl = url.parse(decodeURI(request.url), true).pathname.split('/');
-    
-    //remove empty strings
-    for(var i = 0; i < requestedUrl.length; i++) {
+    //1. get url
+    var requestedUrl = url.parse(decodeURI(request.url), true).path.split('/');
+
+    //2. store url to array
+    for(var i = 0; i < requestedUrl.length; i++){
         if(requestedUrl[i] === '') {
             requestedUrl.splice(i, 1);
         }
     }
-    
-    //if index 0 is empty, most likely we are in the index
-    if(requestedUrl.length === 1) {
-        page = 'index.js';
-        base = requestedUrl[0];
-    } else {
-        base = requestedUrl[0];
-        page = requestedUrl[1] + '.js';
-        
-    }
+    console.log(requestedUrl);
 
-    file = _dir + base + '/' + page; 
+    //2.a. if url length is 1. then its a folder/index, else its folder/page
+    if(requestedUrl.length === 1) {
+        base = requestedUrl[0] + '/';
+        page = 'index.js';
+    } else {
+        base = requestedUrl[0] + '/';
+        page = requestedUrl[1]  + '.js';
+    }
+    
+    //2.b. combine directory, base folder and page.
+    file = _dir + base + page;
+
     console.log(file);
-    //add file directory and page
-    //check if file exist
+    //3. check if file exist
     fs.exists(file, function(exists) {
         if(exists) {
-            //read file content
-            fs.readFile(file, function (err, data) {
-                //if error
+            //3.a. it exists, lets include it!
+            fs.readFile(file, function(err, data) {
                 if(err) {
-                    //it means theres a file but we can't access the file (cant read file)
                     response.writeHead(500);
                     response.end('Server Error');
 
                     return;
                 }
 
-                //if not, now we can require the file
-                var content = require('./' + file);
+                var content = require('./' + file),
+                headers = mimeTypes[path.extname(page)];
 
-                //header will be based on extension
-                var headers = {'Content-type' : mimeTypes[path.extname(page)]};
-                
-                //if theres only one url, load main page.
-                if(requestedUrl.length === 1 || requestedUrl.length === 2){
-                    //call page function
-                    response.writeHead(200, headers);
-                    response.write(typeof content.load === 'function' ? content.load().toString() : 'No function found'); 
-                    response.end();
+                response.writeHead(200, headers)
+                response.write(content.load());
+                response.end();
 
-                    return;     
-                } else {
-                    if (content.hasOwnProperty(requestedUrl[2])) {
-                        response.writeHead(200, headers);
-                        response.write(content[requestedUrl[2]]().toString());
-                        response.end();    
+                return;
 
-                        return;
-                    } else {
-                        response.writeHead(404);
-                        response.write('No function found.');
-                        response.end();                            
-                    }
-
-                }
             });
-
+            
             return;
         }
 
-        response.writeHead(404);
-        response.end('Page Not Found!');
+        //4. if it is not a file, check maybe it is a method
+        file = _dir + page,
+        base = base.substring(base, base.length-1);
+        //read file
+        fs.readFile(file, function(err, data) {
+            //an error will be returned if we cant access the file
+            if(err) {
+                response.writeHead(500);
+                response.end('Server Error');
+
+                return;
+            }
+
+            //if there is no problem, lets require the file
+            var content = require('./'+file);
+                headers  = mimeTypes[path.extname(page)];
+
+            //now lets check if there's a method inside this file.
+            if (content.hasOwnProperty(base)) {
+                //execute the method
+                response.writeHead(200, headers);
+                response.write(content[base]());
+                response.end();
+
+                return;
+            }
+
+            console.log('walang method n ganyan')
+            response.writeHead(200, headers);
+            response.write('Undefined');
+            response.end();
+        });
     });
 })
 //listen to port, and to localhost too
