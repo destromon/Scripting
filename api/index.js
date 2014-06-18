@@ -39,18 +39,28 @@ http.createServer(function(request, response) {
 
         //check if there's a 'GET' request
         if(requestedUrl[i].indexOf('?') !== -1) {
-            //store it to get array
+            //get requested data
             var getRequest = requestedUrl[i].substring(requestedUrl[i].indexOf('?')+1, requestedUrl[i].length);
-            getRequest = getRequest.split('&');
-            console.log(getRequest);
+            
+            //split each data and convert it to object
+            var data = getRequest.split('&');
+            var convertedData = {};
+            for (var g = 0; g < data.length; g++ ){
+                if(data[g].indexOf('=') !== -1) {
+                    var newData = data[g].split('=');
+                    convertedData[newData[0]] = newData[1];
+                }
+            }
+
+            //add converted data to 'GET' array
             requestedUrl[i] = requestedUrl[i].substring(0,requestedUrl[i].indexOf('?'));
             get.push(requestedUrl[i]);
-            get.push(getRequest);
+            get.push(convertedData);
         }
     }
 
-    console.log('url-> ', requestedUrl);
-    console.log('get-> ', get);
+    console.log('url -> ', requestedUrl);
+    console.log('get -> ', get);
     //2.a. if url length is 1. then its a folder/index, else its folder/page
     if(requestedUrl.length === 1) {
         base = requestedUrl[0] + '/';
@@ -80,11 +90,23 @@ http.createServer(function(request, response) {
 
                 response.writeHead(200, headers);
 
-
                 if(requestedUrl.length >= 3) {
                     if(content.hasOwnProperty(requestedUrl[2])) {
+                        console.log('meron');
                         response.writeHead(200, headers);
-                        response.write(content[requestedUrl[2]]());
+
+                        for(var i = 0; i < get.length; i++ ) {
+                            //if function name and get name is equal,
+                            //pass get as parameter                            
+                            if(get[i] ===  requestedUrl[2]) {
+
+                                response.write(content[requestedUrl[2]](get[i+1]));
+                                response.end();
+                                return;
+                            }
+                        }
+
+                        response.write(content[requestedUrl[2]](get[1]));
                         response.end();
 
                         return;
@@ -152,7 +174,6 @@ http.createServer(function(request, response) {
                 return;
             }
 
-            console.log('walang method n ganyan')
             response.writeHead(200, headers);
             response.write('Undefined');
             response.end();
