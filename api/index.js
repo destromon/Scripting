@@ -6,8 +6,6 @@ var Method = (function() {
 
     /* Public Properties
     --------------------------------------------------------------------------*/
-    public.data   = null,
-    public.method = null,
     public.url    = null,
     public.qs     = null;
     /* Private Properties
@@ -24,21 +22,27 @@ var Method = (function() {
 
     /* Public Methods
     --------------------------------------------------------------------------*/
-    public.setRequest = function(method) {
-        this.method = method;
+    public.setRequest = function(request, response, callback) {
+        //check what method is used
+        var requestData = null;
+        if(request.method === 'GET') {
+            var url = require('url');
+            requestData = url.parse(request.url, true).query;
+            callback(request, response, requestData);
+        } else if(request.method === 'POST') {
+            var body='';
+            request.on('data', function(data) {
+                body += data;
+            });
+
+            request.on('end', function(data) {
+                var qs = require('querystring');
+                requestData = qs.parse(body);
+                callback(request, response, requestData);
+            });
+        }
     };
 
-    public.getRequest = function() {
-        return this.method;
-    };
-
-    public.setData = function(data) {
-        this.data = data;
-    };
-
-    public.getData = function() {
-        return this.data;
-    };
     /* Private Methods
     --------------------------------------------------------------------------*/
     /* Adaptor
@@ -76,23 +80,13 @@ http.createServer(function(request, response) {
 
         return;
     }
-    
-    //set request method.    
-    method.setRequest(request.method);
-    //1. check what method is used in form submit.    
-    if(method.getRequest() === 'GET') {
-        method.setData(url.parse(request.url, true).query);        
-    } else if(method.getRequest() === 'POST') {
-        var body='';
-        request.on('data', function(data) {
-            body += data;            
-        });
+    //set request method, and exec as callback
+    method.setRequest(request, response, renderPage);
+})
+//listen to port, and to localhost too
+.listen(8082, 'localhost');
 
-        request.on('end', function(data) {
-            method.setData(qs.parse(body));
-        });
-    }
-
+var renderPage = function(request, response, requestedData){
     //2. get url
     var requestedUrl = url.parse(decodeURI(request.url), true).path;
 
@@ -147,7 +141,7 @@ http.createServer(function(request, response) {
                 // if url request greater than or equal to 3, check if its a method
                 if(requestedUrl.length >= 3) {
                     if(content.hasOwnProperty(requestedUrl[2])) {
-                        response.write(content[requestedUrl[2]](method.getData()));
+                        response.write(content[requestedUrl[2]](requestedData));
                         response.end();
 
                         return;
@@ -210,7 +204,7 @@ http.createServer(function(request, response) {
             if (content.hasOwnProperty(base)) {
                 //execute the method
                 response.writeHead(200, headers);
-                response.write(content[base](method.getData()));
+                response.write(content[base](requestedData));
                 response.end();
 
                 return;
@@ -222,7 +216,4 @@ http.createServer(function(request, response) {
             response.end();
         });
     });
-})
-//listen to port, and to localhost too
-.listen(8082, 'localhost');
-
+};
