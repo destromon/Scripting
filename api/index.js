@@ -20,7 +20,6 @@ var Method = (function() {
     public.__construct = function(url, queryString) {
         this.url = url;
         this.qs  = queryString;
-        console.log( this.url, this.qs);
     };
 
     /* Public Methods
@@ -37,7 +36,7 @@ var Method = (function() {
         this.data = data;
     };
 
-    public.getData = function(data) {
+    public.getData = function() {
         return this.data;
     };
     /* Private Methods
@@ -70,7 +69,6 @@ page     = '',
 file     = '';
     
 http.createServer(function(request, response) {
-    var post = null;
     //if favicon bug, ignore it
     if (request.url === '/favicon.ico') {  
         response.writeHead(404);
@@ -213,7 +211,7 @@ http.createServer(function(request, response) {
             if (content.hasOwnProperty(base)) {
                 //execute the method
                 response.writeHead(200, headers);
-                response.write(content[base]());
+                response.write(content[base](method.getData()));
                 response.end();
 
                 return;
