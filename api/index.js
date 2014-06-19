@@ -1,3 +1,55 @@
+var Method = (function() {
+    var c = function(url, queryString) {
+        this.__construct(url, queryString);
+    },
+    public = c.prototype;
+
+    /* Public Properties
+    --------------------------------------------------------------------------*/
+    public.data   = null,
+    public.method = null,
+    public.url    = null,
+    public.qs     = null;
+    /* Private Properties
+    --------------------------------------------------------------------------*/
+        
+    /* Loader
+    --------------------------------------------------------------------------*/
+    /* Construct
+    --------------------------------------------------------------------------*/
+    public.__construct = function(url, queryString) {
+        this.url = url;
+        this.qs  = queryString;
+        console.log( this.url, this.qs);
+    };
+
+    /* Public Methods
+    --------------------------------------------------------------------------*/
+    public.setRequest = function(method) {
+        this.method = method;
+    };
+
+    public.getRequest = function() {
+        return this.method;
+    };
+
+    public.setData = function(data) {
+        this.data = data;
+    };
+
+    public.getData = function(data) {
+        return this.data;
+    };
+    /* Private Methods
+    --------------------------------------------------------------------------*/
+    /* Adaptor
+    --------------------------------------------------------------------------*/
+    return c;
+})();
+
+//class
+var method = new Method(require('url'), require('querystring'));
+
 //set mimeType
 var mimeTypes = {  
     '.js' : 'text/javascript',  
@@ -6,39 +58,19 @@ var mimeTypes = {
 };
 
 var url = require('url'),
-   path = require('path'),
-   http = require('http'),
-   fs   = require('fs'),
-   qs   = require('querystring'),
-   sys  = require ('sys');
+path    = require('path'),
+http    = require('http'),
+fs      = require('fs'),
+qs      = require('querystring');
 
 //directory, base file, page
 var _dir = 'page/',
-    base = '',
-    page = '',
-    file = '';
-
+base     = '',
+page     = '',
+file     = '';
+    
 http.createServer(function(request, response) {
-    var get  = null,
-        post = null;
-    
-    //1. check what method was used in form submit.
-    
-    if(request.method === 'GET') {
-        var url_parts = url.parse(request.url, true);
-        //console.log(url_parts);
-        get = url_parts.query;
-    } else if(request.method === 'POST') {
-        var body='';
-        request.on('data', function(data) {
-            body += data;
-        });
-
-        request.on('end', function(data) {
-            post = qs.parse(body);            
-        });
-    }
-    
+    var post = null;
     //if favicon bug, ignore it
     if (request.url === '/favicon.ico') {  
         response.writeHead(404);
@@ -46,14 +78,30 @@ http.createServer(function(request, response) {
 
         return;
     }
+    
+    //set request method.    
+    method.setRequest(request.method);
+
+    //1. check what method is used in form submit.    
+    if(method.getRequest() === 'GET') {
+        method.setData(url.parse(request.url, true).query);
+    } else if(method.getRequest() === 'POST') {
+        var body='';
+        request.on('data', function(data) {
+            body += data;
+        });
+
+        request.on('end', function(data) {
+            method.setData(qs.parse(body));
+        });
+    }
 
     //2. get url
     var requestedUrl = url.parse(decodeURI(request.url), true).path;
 
-    //2.a store url to array
+    //2.a store url in array
     requestedUrl = requestedUrl.split('/');
     for(var i = 0; i < requestedUrl.length; i++){
-
         //remove empty string
         if(requestedUrl[i] === '') {
             requestedUrl.splice(i, 1);
@@ -64,7 +112,6 @@ http.createServer(function(request, response) {
             //remove it
             requestedUrl[i] = requestedUrl[i].substring(0,requestedUrl[i].indexOf('?'));
         }
-        
     }
 
     //2.b if url length is 1. then its a folder/index, else its folder/page
@@ -98,17 +145,12 @@ http.createServer(function(request, response) {
                 headers = mimeTypes[path.extname(page)];
                 response.writeHead(200, headers);
 
-                // if url request greater than 3, check if its a method
+                // if url request greater than or equal to 3, check if its a method
                 if(requestedUrl.length >= 3) {
                     if(content.hasOwnProperty(requestedUrl[2])) {
-                        if (get !== null) {
-                            response.write(content[requestedUrl[2]](get));
-                        } else if( post !== null){
-                            response.write(content[requestedUrl[2]](post));    
-                        }
-                        
+                        response.write(content[requestedUrl[2]](method.getData()));
                         response.end();
-
+                        
                         return;
                     } else {
                         response.write('Method does not exist');
@@ -184,3 +226,4 @@ http.createServer(function(request, response) {
 })
 //listen to port, and to localhost too
 .listen(8082, 'localhost');
+
