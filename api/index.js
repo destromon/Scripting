@@ -1,3 +1,22 @@
+//set mimeType
+var mimeTypes = {  
+    '.js' : 'text/javascript',  
+    '.html': 'text/html',  
+    '.css' : 'text/css' 
+};
+
+var url = require('url'),
+path    = require('path'),
+http    = require('http'),
+fs      = require('fs'),
+qs      = require('querystring');
+
+//directory, base file, page
+var _dir = 'page/',
+base     = '',
+page     = '',
+file     = '';
+
 var Method = (function() {
     var c = function(url, queryString) {
         this.__construct(url, queryString);
@@ -22,8 +41,16 @@ var Method = (function() {
 
     /* Public Methods
     --------------------------------------------------------------------------*/
+    /**
+     * get url data and method
+     * 
+     * @param mixed
+     * @param mixed
+     * @param function callback
+     */
+
     public.setRequest = function(request, response, callback) {
-        //check what method is used
+        //get request
         var requestData = null;
         if(request.method === 'GET') {
             var url = require('url');
@@ -61,47 +88,12 @@ var Method = (function() {
     return c;
 })();
 
-//class
-var method = new Method(require('url'), require('querystring'));
-
-//set mimeType
-var mimeTypes = {  
-    '.js' : 'text/javascript',  
-    '.html': 'text/html',  
-    '.css' : 'text/css' 
-};
-
-var url = require('url'),
-path    = require('path'),
-http    = require('http'),
-fs      = require('fs'),
-qs      = require('querystring');
-
-//directory, base file, page
-var _dir = 'page/',
-base     = '',
-page     = '',
-file     = '';
-    
-http.createServer(function(request, response) {
-    //if favicon bug, ignore it
-    if (request.url === '/favicon.ico') {  
-        response.writeHead(404);
-        response.end();  
-
-        return;
-    }
-    //set request method, and exec as callback
-    method.setRequest(request, response, renderPage);
-})
-//listen to port, and to localhost too
-.listen(8082, 'localhost');
-
+//url routing
 var renderPage = function(request, response, requestedData){
-    //2. get url
+    //1. get url
     var requestedUrl = url.parse(decodeURI(request.url), true).path;
 
-    //2.a store url in array
+    //2. store url in array
     requestedUrl = requestedUrl.split('/');
     for(var i = 0; i < requestedUrl.length; i++){
         //remove empty string
@@ -116,7 +108,7 @@ var renderPage = function(request, response, requestedData){
         }
     }
 
-    //2.b if url length is 1. then its a folder/index, else its folder/page
+    //2.a if url length is 1. then its a folder/index, else its folder/page
     if(requestedUrl.length === 1) {
         base = requestedUrl[0] + '/';
         page = 'index.js';
@@ -125,7 +117,7 @@ var renderPage = function(request, response, requestedData){
         page = requestedUrl[1]  + '.js';
     }
     
-    //2.c combine directory, base folder and page.
+    //2.b combine directory, base folder and page.
     file = _dir + base + page;
 
     //3. check if file exist
@@ -147,7 +139,6 @@ var renderPage = function(request, response, requestedData){
                 //get header base on extension
                 headers = mimeTypes[path.extname(page)];
                 response.writeHead(200, headers);
-
 
                 // if url request greater than or equal to 3, check if its a method
                 if(requestedUrl.length >= 3) {
@@ -228,3 +219,19 @@ var renderPage = function(request, response, requestedData){
         });
     });
 };
+
+var method = new Method(require('url'), require('querystring'));
+    
+http.createServer(function(request, response) {
+    //if favicon bug, ignore it
+    if (request.url === '/favicon.ico') {  
+        response.writeHead(404);
+        response.end();  
+
+        return;
+    }
+    //check request method, pass renderPage as callback
+    method.setRequest(request, response, renderPage);
+})
+//listen to port, and to localhost too
+.listen(8082, 'localhost');
