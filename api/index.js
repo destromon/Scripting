@@ -140,17 +140,19 @@ http.createServer(function(request, response) {
                 }
 
                 //if we can read it, include it!
-                var content = require('./' + file),
+                var content = require('./' + file)(),
+                
                 //get header base on extension
                 headers = mimeTypes[path.extname(page)];
                 response.writeHead(200, headers);
+
 
                 // if url request greater than or equal to 3, check if its a method
                 if(requestedUrl.length >= 3) {
                     if(content.hasOwnProperty(requestedUrl[2])) {
                         response.write(content[requestedUrl[2]](method.getData()));
                         response.end();
-                        
+
                         return;
                     } else {
                         response.write('Method does not exist');
@@ -203,7 +205,7 @@ http.createServer(function(request, response) {
             }
 
             //if there is no problem, lets require the file
-            var content = require('./'+file);
+            var content = require('./'+file)();
                 headers  = mimeTypes[path.extname(page)];
 
             //now lets check if there's a method inside this file.

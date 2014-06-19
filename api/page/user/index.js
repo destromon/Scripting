@@ -1,5 +1,7 @@
-var index = function() {    
-    return 'Welcome to user/index Page';
-};
-
-exports.load = index;
+module.exports = function() {
+    return {
+        load : function() {
+            return 'Welcome to user/index page';
+        }
+    }
+}

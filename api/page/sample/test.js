@@ -1,5 +1,7 @@
-var sample = function() {    
-    return 'Welcome to sample/test Page';
+module.exports = function() {
+    return {
+        load : function() {
+            return 'Welcome to sample/test Page';
+        }
+    }
 };
-
-exports.load = sample;

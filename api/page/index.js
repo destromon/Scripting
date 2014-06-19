@@ -1,5 +1,7 @@
-var index = function() {    
-    return 'Welcome to Index / Main Page';
-};
-
-exports.load = index;
+module.exports = function() {
+    return {
+        load : function() {    
+            return 'Welcome to Index / Main Page';
+        }
+    }
+}
