@@ -18,10 +18,7 @@ page     = '',
 file     = '';
 
 var Method = (function() {
-    var c = function(url, queryString) {
-        this.__construct(url, queryString);
-    },
-    public = c.prototype;
+    var c = function() {}, public = c.prototype;
 
     /* Public Properties
     --------------------------------------------------------------------------*/
@@ -34,11 +31,6 @@ var Method = (function() {
     --------------------------------------------------------------------------*/
     /* Construct
     --------------------------------------------------------------------------*/
-    public.__construct = function(url, queryString) {
-        this.url = url;
-        this.qs  = queryString;
-    };
-
     /* Public Methods
     --------------------------------------------------------------------------*/
     /**
@@ -220,7 +212,7 @@ var renderPage = function(request, response, requestedData){
     });
 };
 
-var method = new Method(require('url'), require('querystring'));
+var method = new Method();
     
 http.createServer(function(request, response) {
     //if favicon bug, ignore it
