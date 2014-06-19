@@ -40,6 +40,17 @@ var Method = (function() {
                 requestData = qs.parse(body);
                 callback(request, response, requestData);
             });
+        } else if(request.method === 'PUT') {
+            var body='';
+            request.on('data', function(data) {
+                body += data;
+            });
+
+            request.on('end', function(data) {
+                var qs = require('querystring');
+                requestData = qs.parse(body);
+                callback(request, response, requestData);
+            });
         }
     };
 
