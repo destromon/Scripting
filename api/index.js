@@ -79,14 +79,13 @@ http.createServer(function(request, response) {
     
     //set request method.    
     method.setRequest(request.method);
-
     //1. check what method is used in form submit.    
     if(method.getRequest() === 'GET') {
-        method.setData(url.parse(request.url, true).query);
+        method.setData(url.parse(request.url, true).query);        
     } else if(method.getRequest() === 'POST') {
         var body='';
         request.on('data', function(data) {
-            body += data;
+            body += data;            
         });
 
         request.on('end', function(data) {

@@ -10,6 +10,10 @@ module.exports = function() {
         
         data : function() {
             return 'This is a data method inside user/test.js';            
+        },
+
+        employee : function(query) {
+            return 'Employee name is ' + query.name + ' and address is ' + query.address;
         }
     }
 };
